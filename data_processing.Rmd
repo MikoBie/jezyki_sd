@@ -1,0 +1,495 @@
+---
+title: "Wyniki ankiety SD UW dotyczącej języków"
+output: 
+  
+  bookdown::html_document2:
+    toc: yes
+    toc_depth: 3
+    toc_float: yes
+  word_document: default
+always_allow_html: yes
+---
+
+```{r markdown_setup, include=FALSE}
+knitr::opts_chunk$set(
+    echo = FALSE,
+    message = FALSE,
+    warning = FALSE,
+    base.dir = here::here(),
+    fig.path = "figures/",
+    eval.after = 'fig.cap',
+    fig.width = 8,
+    fig.height = 4
+)
+```
+
+```{r globals}
+## Globals and load libraries
+HERE <- here::here()
+DATA <- file.path(HERE, 'data')
+
+library(tidyverse)
+library(lubridate)
+library(kableExtra)
+library(DT)
+## source("utils/utils.R")
+source("utils/maps.R")
+
+COLORS <- c("#123e65",
+            "#B3160E",
+            "#1F6608"
+            )
+```
+```{r load-data}
+data <- read.csv(file.path(DATA,'dane.csv')) %>%
+  rename(time = 'Sygnatura.czasowa',
+         language = 2) %>% 
+  select(c(-26,-14)) %>%
+  mutate(id = 1:n()) %>% 
+  pivot_longer(cols = c(3:24),
+               names_to = 'question',
+               values_to = 'response',
+               values_ptypes = list(response = character())) %>% 
+  filter(response != '') %>%
+  left_join(question_map) %>%
+  select(-question) %>%
+  left_join(language_map) %>%
+  mutate(response = if_else(is.na(response_map),response,response_map)) %>%
+  select(-response_map) %>%
+  left_join(level_map) %>%
+  mutate(response = if_else(is.na(response_map),response,response_map)) %>%
+  select(-response_map) %>%
+  left_join(year_map) %>%
+  mutate(response = if_else(is.na(response_map),response,response_map)) %>%
+  select(-response_map) %>%
+  left_join(length_map) %>%
+  mutate(response = if_else(is.na(response_map),response,response_map)) %>%
+  select(-response_map) %>%
+  left_join(position_map) %>%
+  mutate(response = if_else(is.na(response_map),response,response_map)) %>%
+  select(-response_map) %>%
+  left_join(type_map) %>%
+  mutate(response = if_else(is.na(response_map),response,response_map)) %>%
+  select(-response_map) %>%
+  mutate(response = str_replace_all(string = response,
+                                   pattern = "regularne zajęcia w tygodniu \\(np\\. 2x 1.5h\\)",
+                                   replacement = "regular weekly classes (e.g. 2x1.5h)"),
+        response = str_replace_all(string = response,
+                                   pattern = "regularne zajęcia w weekendy \\(np\\. 2x1\\.5h\\)",
+                                   replacement = "regular classes on weekends (e.g. 2x1.5h)"),
+        response = str_replace_all(string = response,
+                                   pattern = "zajęcia blokowe w tygodniu \\(np\\. 1x3h\\)",
+                                   replacement = "block classes during the week (e.g. 1x3h)"),
+        response = str_replace_all(string = response,
+                                   pattern = "zajęcia blokowe w weekendy \\(np\\. 1x3h\\)",
+                                   replacement = "block classes on weekends (e.g. 1x3h)"),
+        response = str_replace_all(string = response,
+                                   pattern = 'W trybie stacjonarnym podczas intensywnych kursów wakacyjnych',
+                                   replacement = 'Full-time mode during intensive summer courses'),
+        response = str_replace_all(string = response,
+                                   pattern = 'W trybie stacjonarnym w kolejnym roku akademickim',
+                                   replacement = 'Full-time mode in the next academic year'),
+        response = str_replace_all(string = response,
+                                   pattern = 'W trybie zdalnym w kolejnym roku akademickim',
+                                   replacement = 'Remote mode in the next academic year'),
+        response = str_replace_all(string = response,
+                                   pattern = 'W trybie zdalnym podczas intensywnych kursów wakacyjnych',
+                                   replacement = 'Remote mode during intensive summer courses'),
+        language = if_else(language == 'Polski', 'Polish', 'English')) %>%
+  pivot_wider(id_cols = c(id:language),
+              names_from = variables_names,
+              values_from = response)
+```
+
+# Wstęp
+
+Wyniki ankiety są podzielone na 12 różnych kategorii. Po lewej stronie znajduje się menu, w którym wypisane są wszystkie kategorie. W większości kategorii można wybrać jedną z dwóch możliwości: 
+
+* wyświetlić wyniki na wykresach słupkowych, 
+* wyświetlić wyniki w tabelach (to jest to samo co na wykresach, choć można tam znaleźć brakujące w opisach liczebności),
+
+W opisach wykresów i tabeli znajduje się podsumowanie przedstawionych w nich najważniejszych informacji.
+
+# Ankietowani {.tabset}
+
+## Wykresy
+
+```{r general-plot, fig.height = 6, layout="l-body-outset", fig.cap=cap}
+cap <- sprintf(
+  "W Ankiecie wzięło udział w sumie %.0f doktorantek i doktorantów, z czego %.0f kształci się na studiach doktoranckich, a %.0f w szkołach doktorskich.",
+  data %>% nrow,
+  data %>% filter(position == 'Doctoral Studies') %>% nrow(),
+  data %>% filter(position == 'Doctoral School') %>% nrow()
+  )
+data %>%
+  mutate(position = factor(position, levels = c("Doctoral School", "Doctoral Studies" ))) %>%
+  ggplot(aes(x = year, fill = position)) +
+  geom_bar() +
+  theme_classic() +
+  labs(x = "", y = "Frequency")+ 
+  coord_flip() +
+  scale_y_continuous(expand = expansion(mult = c(0, .1))) +
+  scale_fill_manual(values=COLORS[1:2], limits = c('Doctoral Studies', 'Doctoral School')) +
+  theme(legend.position="bottom", legend.title = element_blank())
+```
+
+## Tabela
+
+```{r general-table, layout="l-body-outset"}
+cap <- sprintf(
+  "W Ankiecie wzięło udział w sumie %.0f doktorantek i doktorantów, z czego %.0f kształci się na studiach doktoranckich, a %.0f w szkołach doktorskich.",
+  data %>% nrow,
+  data %>% filter(position == 'Doctoral Studies') %>% nrow(),
+  data %>% filter(position == 'Doctoral School') %>% nrow()
+  )
+
+data %>%
+  group_by(position,year) %>%
+  summarise(Frequency = n()) %>%
+  rename('Year of Education' = year,
+         "Rodzaj kształcenia" = position) %>%
+  pivot_wider(names_from = "Rodzaj kształcenia",
+              values_from = "Frequency") %>%
+   kable(caption = cap, "html") %>%
+      kable_styling(bootstrap_options = c("striped","hover"),
+                    font_size = 10,
+                    full_width = TRUE)
+      
+```
+# Długość kształcenia {.tabset}
+
+## Wykresy
+
+```{r length-of-learning-plot, fig.height = 6, layout="l-body-outset", fig.cap=cap}
+cap <- sprintf(
+  "W Ankiecie wzięło udział w sumie %.0f doktorantek i doktorantów, z czego %.0f kształci się na studiach doktoranckich, a %.0f w szkołach doktorskich.",
+  data %>% nrow,
+  data %>% filter(position == 'Doctoral Studies') %>% nrow(),
+  data %>% filter(position == 'Doctoral School') %>% nrow()
+  )
+data %>%
+  mutate(position = factor(position, levels = c("Doctoral School", "Doctoral Studies" ))) %>%
+  ggplot(aes(x = length_of_learning, fill = position)) +
+  geom_bar() +
+  theme_classic() +
+  labs(x = "", y = "Frequency")+ 
+  coord_flip() +
+  scale_y_continuous(expand = expansion(mult = c(0, .1))) +
+  scale_fill_manual(values=COLORS[1:2], limits = c('Doctoral Studies', 'Doctoral School')) +
+  theme(legend.position="bottom", legend.title = element_blank())
+```
+
+## Tabela
+
+```{r length-of-learning-table, layout="l-body-outset"}
+cap <- sprintf(
+  "W Ankiecie wzięło udział w sumie %.0f doktorantek i doktorantów, z czego %.0f kształci się na studiach doktoranckich, a %.0f w szkołach doktorskich.",
+  data %>% nrow,
+  data %>% filter(position == 'Doctoral Studies') %>% nrow(),
+  data %>% filter(position == 'Doctoral School') %>% nrow()
+  )
+
+data %>%
+  group_by(position,length_of_learning) %>%
+  summarise(Frequency = n()) %>%
+  rename('Długość trwania kursu' = length_of_learning,
+         "Rodzaj kształcenia" = position) %>%
+  pivot_wider(names_from = "Rodzaj kształcenia",
+              values_from = "Frequency") %>%
+   kable(caption = cap, "html") %>%
+      kable_styling(bootstrap_options = c("striped","hover"),
+                    font_size = 10,
+                    full_width = TRUE)
+      
+```
+
+# Sposób kształcenia {.tabset}
+
+## Wykresy
+
+```{r means-of-learning-plot, fig.height = 6, layout="l-body-outset", fig.cap=cap}
+cap <- sprintf(
+  "W Ankiecie wzięło udział w sumie %.0f doktorantek i doktorantów, z czego %.0f kształci się na studiach doktoranckich, a %.0f w szkołach doktorskich.",
+  data %>% nrow,
+  data %>% filter(position == 'Doctoral Studies') %>% nrow(),
+  data %>% filter(position == 'Doctoral School') %>% nrow()
+  )
+
+data %>%
+  mutate(means_of_learning = str_split(means_of_learning, pattern = ',')) %>%
+  unnest(means_of_learning) %>%
+  mutate(means_of_learning = trimws(means_of_learning),
+         position = factor(position, levels = c("Doctoral School", "Doctoral Studies" )),
+         means_of_learning = factor(means_of_learning, levels = c("regular weekly classes (e.g. 2x1.5h)",
+                                                                  'block classes during the week (e.g. 1x3h)',
+                                                                  "block classes on weekends (e.g. 1x3h)",
+                                                                  "regular classes on weekends (e.g. 2x1.5h)" ))) %>%
+  ggplot(aes(x = means_of_learning, fill = position)) +
+  geom_bar() +
+  theme_classic() +
+  labs(x = "", y = "Frequency")+ 
+  coord_flip() +
+  scale_y_continuous(expand = expansion(mult = c(0, .1))) +
+  scale_fill_manual(values=COLORS[1:2], limits = c('Doctoral Studies', 'Doctoral School')) +
+  theme(legend.position="bottom", legend.title = element_blank())
+  
+  
+ 
+```
+
+## Tabela
+
+```{r means-of-learning-table, layout="l-body-outset"}
+cap <- sprintf(
+  "W Ankiecie wzięło udział w sumie %.0f doktorantek i doktorantów, z czego %.0f kształci się na studiach doktoranckich, a %.0f w szkołach doktorskich.",
+  data %>% nrow,
+  data %>% filter(position == 'Doctoral Studies') %>% nrow(),
+  data %>% filter(position == 'Doctoral School') %>% nrow()
+  )
+
+
+data %>%
+  mutate(means_of_learning = str_split(means_of_learning, pattern = ',')) %>%
+  unnest(means_of_learning) %>%
+  mutate(means_of_learning = trimws(means_of_learning),
+         position = factor(position, levels = c("Doctoral School", "Doctoral Studies" )),
+         means_of_learning = factor(means_of_learning, levels = c("regular weekly classes (e.g. 2x1.5h)",
+                                                                  'block classes during the week (e.g. 1x3h)',
+                                                                  "block classes on weekends (e.g. 1x3h)",
+                                                                  "regular classes on weekends (e.g. 2x1.5h)" ))) %>%
+  group_by(position, means_of_learning) %>%
+  summarise(Frequency = n()) %>%
+  rename('Sposób kształcenia' = means_of_learning,
+         "Rodzaj kształcenia" = position) %>%
+  pivot_wider(names_from = "Rodzaj kształcenia",
+              values_from = "Frequency") %>%
+   kable(caption = cap, "html") %>%
+      kable_styling(bootstrap_options = c("striped","hover"),
+                    font_size = 10,
+                    full_width = TRUE)
+      
+```
+# Forma kursu {.tabset}
+
+## Wykresy
+
+```{r form-of-course-plot, fig.height = 6, layout="l-body-outset", fig.cap=cap}
+cap <- sprintf(
+  "W Ankiecie wzięło udział w sumie %.0f doktorantek i doktorantów, z czego %.0f kształci się na studiach doktoranckich, a %.0f w szkołach doktorskich.",
+  data %>% nrow,
+  data %>% filter(position == 'Doctoral Studies') %>% nrow(),
+  data %>% filter(position == 'Doctoral School') %>% nrow()
+  )
+
+data %>%
+  mutate(form_of_learning = str_split(form_of_learning, pattern = ',')) %>%
+  unnest(form_of_learning) %>%
+  mutate(form_of_learning = trimws(form_of_learning),
+         position = factor(position, levels = c("Doctoral School", "Doctoral Studies" )),
+         form_of_learning = factor(form_of_learning, levels = c("Remote mode in the next academic year",
+                                                                "Full-time mode in the next academic year",
+                                                                'Remote mode during intensive summer courses',
+                                                                "Full-time mode during intensive summer courses"))) %>%
+  ggplot(aes(x = form_of_learning, fill = position)) +
+  geom_bar() +
+  theme_classic() +
+  labs(x = "", y = "Frequency")+ 
+  coord_flip() +
+  scale_y_continuous(expand = expansion(mult = c(0, .1))) +
+  scale_fill_manual(values=COLORS[1:2], limits = c('Doctoral Studies', 'Doctoral School')) +
+  theme(legend.position="bottom", legend.title = element_blank())
+  
+  
+ 
+```
+
+## Tabela
+
+```{r form_of_course-table, layout="l-body-outset"}
+cap <- sprintf(
+  "W Ankiecie wzięło udział w sumie %.0f doktorantek i doktorantów, z czego %.0f kształci się na studiach doktoranckich, a %.0f w szkołach doktorskich.",
+  data %>% nrow,
+  data %>% filter(position == 'Doctoral Studies') %>% nrow(),
+  data %>% filter(position == 'Doctoral School') %>% nrow()
+  )
+
+
+data %>%
+  mutate(form_of_learning = str_split(form_of_learning, pattern = ',')) %>%
+  unnest(form_of_learning) %>%
+  mutate(form_of_learning = trimws(form_of_learning),
+         position = factor(position, levels = c("Doctoral School", "Doctoral Studies" )),
+         form_of_learning = factor(form_of_learning, levels = c("Remote mode in the next academic year",
+                                                                "Full-time mode in the next academic year",
+                                                                'Remote mode during intensive summer courses',
+                                                                "Full-time mode during intensive summer courses"))) %>%
+  group_by(position, form_of_learning) %>%
+  summarise(Frequency = n()) %>%
+  rename('Forma kursu' = form_of_learning,
+         "Rodzaj kształcenia" = position) %>%
+  pivot_wider(names_from = "Rodzaj kształcenia",
+              values_from = "Frequency") %>%
+   kable(caption = cap, "html") %>%
+      kable_styling(bootstrap_options = c("striped","hover"),
+                    font_size = 10,
+                    full_width = TRUE)
+      
+```
+
+# Rodzaj kursu {.tabset}
+
+## Wykresy
+
+```{r type-of-course-plot, fig.height = 6, layout="l-body-outset", fig.cap=cap}
+cap <- sprintf(
+  "W Ankiecie wzięło udział w sumie %.0f doktorantek i doktorantów, z czego %.0f kształci się na studiach doktoranckich, a %.0f w szkołach doktorskich.",
+  data %>% nrow,
+  data %>% filter(position == 'Doctoral Studies') %>% nrow(),
+  data %>% filter(position == 'Doctoral School') %>% nrow()
+  )
+data %>%
+  mutate(position = factor(position, levels = c("Doctoral School", "Doctoral Studies" )),
+         type_of_course = factor(type_of_course, levels = c('general course (any language)',
+                                                            'academic speaking (presenting & debating)',
+                                                            'academic writing in English',
+                                                            'English for research publications'))) %>%
+  ggplot(aes(x = type_of_course, fill = position)) +
+  geom_bar() +
+  theme_classic() +
+  labs(x = "", y = "Frequency")+ 
+  coord_flip() +
+  scale_y_continuous(expand = expansion(mult = c(0, .1))) +
+  scale_fill_manual(values=COLORS[1:2], limits = c('Doctoral Studies', 'Doctoral School')) +
+  theme(legend.position="bottom", legend.title = element_blank())
+```
+
+## Tabela
+
+```{r type-of-course-table, layout="l-body-outset"}
+cap <- sprintf(
+  "W Ankiecie wzięło udział w sumie %.0f doktorantek i doktorantów, z czego %.0f kształci się na studiach doktoranckich, a %.0f w szkołach doktorskich.",
+  data %>% nrow,
+  data %>% filter(position == 'Doctoral Studies') %>% nrow(),
+  data %>% filter(position == 'Doctoral School') %>% nrow()
+  )
+
+data %>%
+  group_by(position,type_of_course) %>%
+  summarise(Frequency = n()) %>%
+  rename('Type of Course' = type_of_course,
+         "Rodzaj kształcenia" = position) %>%
+  pivot_wider(names_from = "Rodzaj kształcenia",
+              values_from = "Frequency") %>%
+   kable(caption = cap, "html") %>%
+      kable_styling(bootstrap_options = c("striped","hover"),
+                    font_size = 10,
+                    full_width = TRUE)
+      
+```
+
+# Pierwszy język {.tabset}
+
+## Wykresy
+
+```{r language-plot, fig.height = 6, layout="l-body-outset", fig.cap=cap}
+cap <- sprintf(
+  "W Ankiecie wzięło udział w sumie %.0f doktorantek i doktorantów, z czego %.0f kształci się na studiach doktoranckich, a %.0f w szkołach doktorskich.",
+  data %>% nrow,
+  data %>% filter(position == 'Doctoral Studies') %>% nrow(),
+  data %>% filter(position == 'Doctoral School') %>% nrow()
+  )
+data %>%
+  mutate(first_language = factor(first_language, levels = c('English', 'German', 'Spanish', 'French',
+                                                            'Russian','Italian', 'Arabic', 'Chinese', 
+                                                            'Japanese','Turkish', 'Hebrew', 'Dutch', 
+                                                            'Korean', 'Latin','Portugese','Sign Language', 
+                                                            'Yiddish',  'Chechen', 'Greek',  'Hungarian', 
+                                                            'Norwegian'))) %>%
+  ggplot(aes(x = first_language)) +
+  geom_bar(fill = COLORS[1]) +
+  theme_classic() +
+  labs(x = "", y = "Frequency")+ 
+  coord_flip() +
+  scale_y_continuous(expand = expansion(mult = c(0, .1))) +
+  theme(legend.position="bottom", legend.title = element_blank())
+  
+```
+
+## Tabela
+
+```{r language-table, layout="l-body-outset"}
+cap <- sprintf(
+  "W Ankiecie wzięło udział w sumie %.0f doktorantek i doktorantów, z czego %.0f kształci się na studiach doktoranckich, a %.0f w szkołach doktorskich.",
+  data %>% nrow,
+  data %>% filter(position == 'Doctoral Studies') %>% nrow(),
+  data %>% filter(position == 'Doctoral School') %>% nrow()
+  )
+
+data %>%
+  group_by(first_language,level_first_language) %>%
+  summarise(Frequency = n()) %>%
+  rename('Language' = first_language,
+         "Poziom" = level_first_language) %>%
+  pivot_wider(names_from = "Poziom",
+              values_from = "Frequency") %>%
+   kable(caption = cap, "html") %>%
+      kable_styling(bootstrap_options = c("striped","hover"),
+                    font_size = 10,
+                    full_width = TRUE)
+      
+```
+
+# Drugi język {.tabset}
+
+## Wykresy
+
+```{r language-2-plot, fig.height = 6, layout="l-body-outset", fig.cap=cap}
+cap <- sprintf(
+  "W Ankiecie wzięło udział w sumie %.0f doktorantek i doktorantów, z czego %.0f kształci się na studiach doktoranckich, a %.0f w szkołach doktorskich.",
+  data %>% nrow,
+  data %>% filter(position == 'Doctoral Studies') %>% nrow(),
+  data %>% filter(position == 'Doctoral School') %>% nrow()
+  )
+data %>%
+  filter(!is.na(second_language)) %>%
+  filter(second_language != 'Skupiłbym się na jednym') %>%
+  mutate(second_language = factor(second_language, levels = c('German', 'French', 'English', 'Spanish', 
+                                                           'Russian','Italian', 'Chinese', 
+                                                           'Japanese', 'Arabic', 'Croatian', 'Czech',
+                                                           'Persian', 'Dutch', 'Farsi', 'Finish', 'Greek',
+                                                           'Hebrew', 'Hindu', 'Korean', 'Portugese',
+                                                           'Romanian', 'Swedish', 'Tagolag', 'Turkish'))) %>%
+  ggplot(aes(x = second_language)) +
+  geom_bar(fill = COLORS[1]) +
+  theme_classic() +
+  labs(x = "", y = "Frequency")+ 
+  coord_flip() +
+  scale_y_continuous(expand = expansion(mult = c(0, .1))) +
+  theme(legend.position="bottom", legend.title = element_blank())
+```
+
+## Tabela
+
+```{r language-2-table, layout="l-body-outset"}
+cap <- sprintf(
+  "W Ankiecie wzięło udział w sumie %.0f doktorantek i doktorantów, z czego %.0f kształci się na studiach doktoranckich, a %.0f w szkołach doktorskich.",
+  data %>% nrow,
+  data %>% filter(position == 'Doctoral Studies') %>% nrow(),
+  data %>% filter(position == 'Doctoral School') %>% nrow()
+  )
+
+data %>%
+  filter(!is.na(second_language)) %>%
+  filter(second_language != 'Skupiłbym się na jednym') %>%
+  group_by(second_language,level_second_language) %>%
+  summarise(Frequency = n()) %>%
+  rename('Language' = second_language,
+         "Poziom" = level_second_language) %>%
+  pivot_wider(names_from = "Poziom",
+              values_from = "Frequency") %>%
+   kable(caption = cap, "html") %>%
+      kable_styling(bootstrap_options = c("striped","hover"),
+                    font_size = 10,
+                    full_width = TRUE)
+      
+```
