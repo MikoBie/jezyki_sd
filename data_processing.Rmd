@@ -349,7 +349,7 @@ data %>%
 
 ```{r form-of-course-plot, fig.height = 6, layout="l-body-outset", fig.cap=cap}
 cap <- sprintf(
-  "W Ankiecie wzięło udział w sumie %.0f doktorantek i doktorantów, z czego %.0f kształci się na studiach doktoranckich, a %.0f w szkołach doktorskich. Najwięcej osób chciałoby brać udział w zajęciach zdalnych w przysłym roku.",
+  "W Ankiecie wzięło udział w sumie %.0f doktorantek i doktorantów, z czego %.0f kształci się na studiach doktoranckich, a %.0f w szkołach doktorskich. Najwięcej osób chciałoby brać udział w zajęciach zdalnych w przyszłym roku.",
   data %>% nrow,
   data %>% filter(position == 'Doctoral Studies') %>% nrow(),
   data %>% filter(position == 'Doctoral School') %>% nrow()
@@ -382,7 +382,7 @@ data %>%
 
 ```{r form-of-course-table, layout="l-body-outset"}
 cap <- sprintf(
-  "W Ankiecie wzięło udział w sumie %.0f doktorantek i doktorantów, z czego %.0f kształci się na studiach doktoranckich, a %.0f w szkołach doktorskich. Ogólnie, najwięcej osób chciałoby brać udział w zajęciach zdalnych w przysłym roku, choć przy podziale na studia doktorankcie i szkoły doktorskie widać, że więcej respondentek i respondentów ze starego trybu wybrałoby zdalne intensywne kursy wakacyjne.",
+  "W Ankiecie wzięło udział w sumie %.0f doktorantek i doktorantów, z czego %.0f kształci się na studiach doktoranckich, a %.0f w szkołach doktorskich. Ogólnie, najwięcej osób chciałoby brać udział w zajęciach zdalnych w przyszłym roku, choć przy podziale na studia doktorankcie i szkoły doktorskie widać, że więcej respondentek i respondentów ze starego trybu wybrałoby zdalne intensywne kursy wakacyjne.",
   data %>% nrow,
   data %>% filter(position == 'Doctoral Studies') %>% nrow(),
   data %>% filter(position == 'Doctoral School') %>% nrow()
