@@ -103,10 +103,10 @@ data <- read.csv(file.path(DATA,'dane.csv')) %>%
 
 # Wstęp
 
-Wyniki ankiety są podzielone na 12 różnych kategorii. Po lewej stronie znajduje się menu, w którym wypisane są wszystkie kategorie. W większości kategorii można wybrać jedną z dwóch możliwości: 
+Wyniki ankiety są podzielone na 8 różnych kategorii. Po lewej stronie znajduje się menu, w którym wypisane są wszystkie kategorie. We wszystkich kategoriach można wybrać jedną z dwóch możliwości: 
 
 * wyświetlić wyniki na wykresach słupkowych, 
-* wyświetlić wyniki w tabelach (to jest to samo co na wykresach, choć można tam znaleźć brakujące w opisach liczebności),
+* wyświetlić wyniki w tabelach (są dużo bardziej szczegółowe niż na wykresach).
 
 W opisach wykresów i tabeli znajduje się podsumowanie przedstawionych w nich najważniejszych informacji.
 
@@ -116,7 +116,7 @@ W opisach wykresów i tabeli znajduje się podsumowanie przedstawionych w nich n
 
 ```{r general-plot, fig.height = 6, layout="l-body-outset", fig.cap=cap}
 cap <- sprintf(
-  "W Ankiecie wzięło udział w sumie %.0f doktorantek i doktorantów, z czego %.0f kształci się na studiach doktoranckich, a %.0f w szkołach doktorskich.",
+  "W Ankiecie wzięło udział w sumie %.0f doktorantek i doktorantów, z czego %.0f kształci się na studiach doktoranckich, a %.0f w szkołach doktorskich. Najwięcej osób wypełniło ankietę z pierwszego roku (jedna osoba z pierwszego roku na studiach doktoranckich to raczej jest błąd).",
   data %>% nrow,
   data %>% filter(position == 'Doctoral Studies') %>% nrow(),
   data %>% filter(position == 'Doctoral School') %>% nrow()
@@ -137,7 +137,7 @@ data %>%
 
 ```{r general-table, layout="l-body-outset"}
 cap <- sprintf(
-  "W Ankiecie wzięło udział w sumie %.0f doktorantek i doktorantów, z czego %.0f kształci się na studiach doktoranckich, a %.0f w szkołach doktorskich.",
+  "W Ankiecie wzięło udział w sumie %.0f doktorantek i doktorantów, z czego %.0f kształci się na studiach doktoranckich, a %.0f w szkołach doktorskich. Najwięcej osób wypełniło ankietę z pierwszego roku (jedna osoba z pierwszego roku na studiach doktoranckich to raczej jest błąd).",
   data %>% nrow,
   data %>% filter(position == 'Doctoral Studies') %>% nrow(),
   data %>% filter(position == 'Doctoral School') %>% nrow()
@@ -156,13 +156,34 @@ data %>%
                     full_width = TRUE)
       
 ```
+```{r general-table-2, layout="l-body-outset"}
+cap <- sprintf(
+  "W Ankiecie wzięło udział w sumie %.0f doktorantek i doktorantów, z czego %.0f kształci się na studiach doktoranckich, a %.0f w szkołach doktorskich. Tylko 17 osób wypełniło ankietę w języku angielskim.",
+  data %>% nrow,
+  data %>% filter(position == 'Doctoral Studies') %>% nrow(),
+  data %>% filter(position == 'Doctoral School') %>% nrow()
+  )
+
+data %>%
+  group_by(position,language) %>%
+  summarise(Frequency = n()) %>%
+  rename('Language of the Survey' = language,
+         "Rodzaj kształcenia" = position) %>%
+  pivot_wider(names_from = "Rodzaj kształcenia",
+              values_from = "Frequency") %>%
+   kable(caption = cap, "html") %>%
+      kable_styling(bootstrap_options = c("striped","hover"),
+                    font_size = 10,
+                    full_width = TRUE)
+      
+```
 # Długość kształcenia {.tabset}
 
 ## Wykresy
 
 ```{r length-of-learning-plot, fig.height = 6, layout="l-body-outset", fig.cap=cap}
 cap <- sprintf(
-  "W Ankiecie wzięło udział w sumie %.0f doktorantek i doktorantów, z czego %.0f kształci się na studiach doktoranckich, a %.0f w szkołach doktorskich.",
+  "W Ankiecie wzięło udział w sumie %.0f doktorantek i doktorantów, z czego %.0f kształci się na studiach doktoranckich, a %.0f w szkołach doktorskich. Niezależnie od trybu kształcenia większość osób chciałaby brać udział w kursach przynajmnije 120 godzinnych.",
   data %>% nrow,
   data %>% filter(position == 'Doctoral Studies') %>% nrow(),
   data %>% filter(position == 'Doctoral School') %>% nrow()
@@ -183,7 +204,7 @@ data %>%
 
 ```{r length-of-learning-table, layout="l-body-outset"}
 cap <- sprintf(
-  "W Ankiecie wzięło udział w sumie %.0f doktorantek i doktorantów, z czego %.0f kształci się na studiach doktoranckich, a %.0f w szkołach doktorskich.",
+  "W Ankiecie wzięło udział w sumie %.0f doktorantek i doktorantów, z czego %.0f kształci się na studiach doktoranckich, a %.0f w szkołach doktorskich. Niezależnie od trybu kształcenia większość osób chciałaby brać udział w kursach przynajmnije 120 godzinnych.",
   data %>% nrow,
   data %>% filter(position == 'Doctoral Studies') %>% nrow(),
   data %>% filter(position == 'Doctoral School') %>% nrow()
@@ -191,6 +212,7 @@ cap <- sprintf(
 
 data %>%
   group_by(position,length_of_learning) %>%
+  mutate(length_of_learning = factor(length_of_learning, levels = c('60 hours', '>120 hours'))) %>%
   summarise(Frequency = n()) %>%
   rename('Długość trwania kursu' = length_of_learning,
          "Rodzaj kształcenia" = position) %>%
@@ -203,13 +225,35 @@ data %>%
       
 ```
 
+```{r length-of-learning-2-table, layout="l-body-outset"}
+cap <- sprintf(
+  "W Ankiecie wzięło udział w sumie %.0f doktorantek i doktorantów, z czego %.0f kształci się na studiach doktoranckich, a %.0f w szkołach doktorskich. Co zaskakujące niezależnie od roku kształcenia, respondenci i respondentki wolałyby brać udział w kursach przynajmniej 120 godzinnych.",
+  data %>% nrow,
+  data %>% filter(position == 'Doctoral Studies') %>% nrow(),
+  data %>% filter(position == 'Doctoral School') %>% nrow()
+  )
+
+data %>%
+  group_by(year,length_of_learning) %>%
+  mutate(length_of_learning = factor(length_of_learning, levels = c('60 hours', '>120 hours'))) %>%
+  summarise(Frequency = n()) %>%
+  rename('Długość trwania kursu' = length_of_learning,
+         "Rok kształcenia" = year) %>%
+  pivot_wider(names_from = "Rok kształcenia",
+              values_from = "Frequency") %>%
+   kable(caption = cap, "html") %>%
+      kable_styling(bootstrap_options = c("striped","hover"),
+                    font_size = 10,
+                    full_width = TRUE)
+      
+```
 # Sposób kształcenia {.tabset}
 
 ## Wykresy
 
 ```{r means-of-learning-plot, fig.height = 6, layout="l-body-outset", fig.cap=cap}
 cap <- sprintf(
-  "W Ankiecie wzięło udział w sumie %.0f doktorantek i doktorantów, z czego %.0f kształci się na studiach doktoranckich, a %.0f w szkołach doktorskich.",
+  "W Ankiecie wzięło udział w sumie %.0f doktorantek i doktorantów, z czego %.0f kształci się na studiach doktoranckich, a %.0f w szkołach doktorskich. Respondenci i respondentki najchętniej brałyby udział w zajęciach dwa razy w tygodniu.",
   data %>% nrow,
   data %>% filter(position == 'Doctoral Studies') %>% nrow(),
   data %>% filter(position == 'Doctoral School') %>% nrow()
@@ -241,7 +285,7 @@ data %>%
 
 ```{r means-of-learning-table, layout="l-body-outset"}
 cap <- sprintf(
-  "W Ankiecie wzięło udział w sumie %.0f doktorantek i doktorantów, z czego %.0f kształci się na studiach doktoranckich, a %.0f w szkołach doktorskich.",
+  "W Ankiecie wzięło udział w sumie %.0f doktorantek i doktorantów, z czego %.0f kształci się na studiach doktoranckich, a %.0f w szkołach doktorskich. Respondenci i respondentki najchętniej brałyby udział w zajęciach dwa razy w tygodniu.",
   data %>% nrow,
   data %>% filter(position == 'Doctoral Studies') %>% nrow(),
   data %>% filter(position == 'Doctoral School') %>% nrow()
@@ -253,15 +297,45 @@ data %>%
   unnest(means_of_learning) %>%
   mutate(means_of_learning = trimws(means_of_learning),
          position = factor(position, levels = c("Doctoral School", "Doctoral Studies" )),
-         means_of_learning = factor(means_of_learning, levels = c("regular weekly classes (e.g. 2x1.5h)",
-                                                                  'block classes during the week (e.g. 1x3h)',
+         means_of_learning = factor(means_of_learning, levels = c("regular classes on weekends (e.g. 2x1.5h)",
                                                                   "block classes on weekends (e.g. 1x3h)",
-                                                                  "regular classes on weekends (e.g. 2x1.5h)" ))) %>%
+                                                                  'block classes during the week (e.g. 1x3h)',
+                                                                  "regular weekly classes (e.g. 2x1.5h)"))) %>%
   group_by(position, means_of_learning) %>%
   summarise(Frequency = n()) %>%
   rename('Sposób kształcenia' = means_of_learning,
          "Rodzaj kształcenia" = position) %>%
   pivot_wider(names_from = "Rodzaj kształcenia",
+              values_from = "Frequency") %>%
+   kable(caption = cap, "html") %>%
+      kable_styling(bootstrap_options = c("striped","hover"),
+                    font_size = 10,
+                    full_width = TRUE)
+      
+```
+```{r means-of-learning-2-table, layout="l-body-outset"}
+cap <- sprintf(
+  "W Ankiecie wzięło udział w sumie %.0f doktorantek i doktorantów, z czego %.0f kształci się na studiach doktoranckich, a %.0f w szkołach doktorskich. Niezależnie od roku kształcenia, respondenci i respondentki wolałyby się uczyć języków dwa razy w tygodniu.",
+  data %>% nrow,
+  data %>% filter(position == 'Doctoral Studies') %>% nrow(),
+  data %>% filter(position == 'Doctoral School') %>% nrow()
+  )
+
+
+data %>%
+  mutate(means_of_learning = str_split(means_of_learning, pattern = ',')) %>%
+  unnest(means_of_learning) %>%
+  mutate(means_of_learning = trimws(means_of_learning),
+         position = factor(position, levels = c("Doctoral School", "Doctoral Studies" )),
+         means_of_learning = factor(means_of_learning, levels = c("regular classes on weekends (e.g. 2x1.5h)",
+                                                                  "block classes on weekends (e.g. 1x3h)",
+                                                                  'block classes during the week (e.g. 1x3h)',
+                                                                  "regular weekly classes (e.g. 2x1.5h)"))) %>%
+  group_by(year, means_of_learning) %>%
+  summarise(Frequency = n()) %>%
+  rename('Sposób kształcenia' = means_of_learning,
+         "Rok kształcenia" = year) %>%
+  pivot_wider(names_from = "Rok kształcenia",
               values_from = "Frequency") %>%
    kable(caption = cap, "html") %>%
       kable_styling(bootstrap_options = c("striped","hover"),
@@ -275,7 +349,7 @@ data %>%
 
 ```{r form-of-course-plot, fig.height = 6, layout="l-body-outset", fig.cap=cap}
 cap <- sprintf(
-  "W Ankiecie wzięło udział w sumie %.0f doktorantek i doktorantów, z czego %.0f kształci się na studiach doktoranckich, a %.0f w szkołach doktorskich.",
+  "W Ankiecie wzięło udział w sumie %.0f doktorantek i doktorantów, z czego %.0f kształci się na studiach doktoranckich, a %.0f w szkołach doktorskich. Najwięcej osób chciałoby brać udział w zajęciach zdalnych w przysłym roku.",
   data %>% nrow,
   data %>% filter(position == 'Doctoral Studies') %>% nrow(),
   data %>% filter(position == 'Doctoral School') %>% nrow()
@@ -301,13 +375,14 @@ data %>%
   
   
  
+
 ```
 
 ## Tabela
 
-```{r form_of_course-table, layout="l-body-outset"}
+```{r form-of-course-table, layout="l-body-outset"}
 cap <- sprintf(
-  "W Ankiecie wzięło udział w sumie %.0f doktorantek i doktorantów, z czego %.0f kształci się na studiach doktoranckich, a %.0f w szkołach doktorskich.",
+  "W Ankiecie wzięło udział w sumie %.0f doktorantek i doktorantów, z czego %.0f kształci się na studiach doktoranckich, a %.0f w szkołach doktorskich. Ogólnie, najwięcej osób chciałoby brać udział w zajęciach zdalnych w przysłym roku, choć przy podziale na studia doktorankcie i szkoły doktorskie widać, że więcej respondentek i respondentów ze starego trybu wybrałoby zdalne intensywne kursy wakacyjne.",
   data %>% nrow,
   data %>% filter(position == 'Doctoral Studies') %>% nrow(),
   data %>% filter(position == 'Doctoral School') %>% nrow()
@@ -319,15 +394,45 @@ data %>%
   unnest(form_of_learning) %>%
   mutate(form_of_learning = trimws(form_of_learning),
          position = factor(position, levels = c("Doctoral School", "Doctoral Studies" )),
-         form_of_learning = factor(form_of_learning, levels = c("Remote mode in the next academic year",
-                                                                "Full-time mode in the next academic year",
+         form_of_learning = factor(form_of_learning, levels = c("Full-time mode during intensive summer courses",
                                                                 'Remote mode during intensive summer courses',
-                                                                "Full-time mode during intensive summer courses"))) %>%
+                                                                "Full-time mode in the next academic year",
+                                                                "Remote mode in the next academic year" ))) %>%
   group_by(position, form_of_learning) %>%
   summarise(Frequency = n()) %>%
   rename('Forma kursu' = form_of_learning,
          "Rodzaj kształcenia" = position) %>%
   pivot_wider(names_from = "Rodzaj kształcenia",
+              values_from = "Frequency") %>%
+   kable(caption = cap, "html") %>%
+      kable_styling(bootstrap_options = c("striped","hover"),
+                    font_size = 10,
+                    full_width = TRUE)
+      
+```
+```{r form-of-course-2-table, layout="l-body-outset"}
+cap <- sprintf(
+  "W Ankiecie wzięło udział w sumie %.0f doktorantek i doktorantów, z czego %.0f kształci się na studiach doktoranckich, a %.0f w szkołach doktorskich. Respondenci i respondentki na przedłużeniu wolałyby brać udział w zajęciach zdalnych podczas intensywnych kursów wakacyjncyh.",
+  data %>% nrow,
+  data %>% filter(position == 'Doctoral Studies') %>% nrow(),
+  data %>% filter(position == 'Doctoral School') %>% nrow()
+  )
+
+
+data %>%
+  mutate(form_of_learning = str_split(form_of_learning, pattern = ',')) %>%
+  unnest(form_of_learning) %>%
+  mutate(form_of_learning = trimws(form_of_learning),
+         position = factor(position, levels = c("Doctoral School", "Doctoral Studies" )),
+         form_of_learning = factor(form_of_learning, levels = c("Full-time mode during intensive summer courses",
+                                                                'Remote mode during intensive summer courses',
+                                                                "Full-time mode in the next academic year",
+                                                                "Remote mode in the next academic year" ))) %>%
+  group_by(year, form_of_learning) %>%
+  summarise(Frequency = n()) %>%
+  rename('Forma kursu' = form_of_learning,
+         "Rok kształcenia" = year) %>%
+  pivot_wider(names_from = "Rok kształcenia",
               values_from = "Frequency") %>%
    kable(caption = cap, "html") %>%
       kable_styling(bootstrap_options = c("striped","hover"),
@@ -342,7 +447,7 @@ data %>%
 
 ```{r type-of-course-plot, fig.height = 6, layout="l-body-outset", fig.cap=cap}
 cap <- sprintf(
-  "W Ankiecie wzięło udział w sumie %.0f doktorantek i doktorantów, z czego %.0f kształci się na studiach doktoranckich, a %.0f w szkołach doktorskich.",
+  "W Ankiecie wzięło udział w sumie %.0f doktorantek i doktorantów, z czego %.0f kształci się na studiach doktoranckich, a %.0f w szkołach doktorskich. Zdecydowanie najpopularniejszym rodzajem kursu, który wybierali respondenci i respondentki był ogóny kurs językowy.",
   data %>% nrow,
   data %>% filter(position == 'Doctoral Studies') %>% nrow(),
   data %>% filter(position == 'Doctoral School') %>% nrow()
@@ -367,18 +472,49 @@ data %>%
 
 ```{r type-of-course-table, layout="l-body-outset"}
 cap <- sprintf(
-  "W Ankiecie wzięło udział w sumie %.0f doktorantek i doktorantów, z czego %.0f kształci się na studiach doktoranckich, a %.0f w szkołach doktorskich.",
+  "W Ankiecie wzięło udział w sumie %.0f doktorantek i doktorantów, z czego %.0f kształci się na studiach doktoranckich, a %.0f w szkołach doktorskich. Zdecydowanie najpopularniejszym rodzajem kursu, który wybierali respondenci i respondentki był ogóny kurs językowy. Co ciekawe zdecydowana mniejszość wybrałaby zajęcia dotyczące pisania publikacji po angielsku.",
   data %>% nrow,
   data %>% filter(position == 'Doctoral Studies') %>% nrow(),
   data %>% filter(position == 'Doctoral School') %>% nrow()
   )
 
 data %>%
+  mutate(position = factor(position, levels = c("Doctoral School", "Doctoral Studies" )),
+         type_of_course = factor(type_of_course, levels = c('English for research publications',
+                                                            'academic writing in English',
+                                                            'academic speaking (presenting & debating)',
+                                                            'general course (any language)'))) %>%
   group_by(position,type_of_course) %>%
   summarise(Frequency = n()) %>%
   rename('Type of Course' = type_of_course,
          "Rodzaj kształcenia" = position) %>%
   pivot_wider(names_from = "Rodzaj kształcenia",
+              values_from = "Frequency") %>%
+   kable(caption = cap, "html") %>%
+      kable_styling(bootstrap_options = c("striped","hover"),
+                    font_size = 10,
+                    full_width = TRUE)
+      
+```
+```{r type-of-course-2-table, layout="l-body-outset"}
+cap <- sprintf(
+  "W Ankiecie wzięło udział w sumie %.0f doktorantek i doktorantów, z czego %.0f kształci się na studiach doktoranckich, a %.0f w szkołach doktorskich. Zdecydowanie najpopularniejszym rodzajem kursu, który wybierali respondenci i respondentki był ogóny kurs językowy. Co ciekawe zdecydowana mniejszość wybrałaby zajęcia dotyczące pisania publikacji po angielsku.",
+  data %>% nrow,
+  data %>% filter(position == 'Doctoral Studies') %>% nrow(),
+  data %>% filter(position == 'Doctoral School') %>% nrow()
+  )
+
+data %>%
+  mutate(position = factor(position, levels = c("Doctoral School", "Doctoral Studies" )),
+         type_of_course = factor(type_of_course, levels = c('English for research publications',
+                                                            'academic writing in English',
+                                                            'academic speaking (presenting & debating)',
+                                                            'general course (any language)'))) %>%
+  group_by(year,type_of_course) %>%
+  summarise(Frequency = n()) %>%
+  rename('Type of Course' = type_of_course,
+         "Rok kształcenia" = year) %>%
+  pivot_wider(names_from = "Rok kształcenia",
               values_from = "Frequency") %>%
    kable(caption = cap, "html") %>%
       kable_styling(bootstrap_options = c("striped","hover"),
@@ -419,7 +555,7 @@ data %>%
 
 ```{r language-table, layout="l-body-outset"}
 cap <- sprintf(
-  "W Ankiecie wzięło udział w sumie %.0f doktorantek i doktorantów, z czego %.0f kształci się na studiach doktoranckich, a %.0f w szkołach doktorskich.",
+  "W Ankiecie wzięło udział w sumie %.0f doktorantek i doktorantów, z czego %.0f kształci się na studiach doktoranckich, a %.0f w szkołach doktorskich. Warto zwrócić uwagę na to, że mimo że angielski jest najbardziej popularnym językiem to respondenci i respondentki chciałyby się go uczyć tylko od poziomu B2, w niższych poziomach pierwszeństwo wiodą takie języki jak niemiecki, rosyjski czy hiszpański.",
   data %>% nrow,
   data %>% filter(position == 'Doctoral Studies') %>% nrow(),
   data %>% filter(position == 'Doctoral School') %>% nrow()
@@ -432,10 +568,11 @@ data %>%
          "Poziom" = level_first_language) %>%
   pivot_wider(names_from = "Poziom",
               values_from = "Frequency") %>%
-   kable(caption = cap, "html") %>%
-      kable_styling(bootstrap_options = c("striped","hover"),
-                    font_size = 10,
-                    full_width = TRUE)
+  mutate(across(matches('\\d'),~replace_na(.,0))) %>%
+  DT::datatable(caption = cap,
+                  rownames = FALSE,
+                  filter = "top",
+                  options = list(sDom  = '<"top">lrt<"bottom">ip'))
       
 ```
 
@@ -472,7 +609,7 @@ data %>%
 
 ```{r language-2-table, layout="l-body-outset"}
 cap <- sprintf(
-  "W Ankiecie wzięło udział w sumie %.0f doktorantek i doktorantów, z czego %.0f kształci się na studiach doktoranckich, a %.0f w szkołach doktorskich.",
+  "W Ankiecie wzięło udział w sumie %.0f doktorantek i doktorantów, z czego %.0f kształci się na studiach doktoranckich, a %.0f w szkołach doktorskich. Podobnie jak w przypadku pierwszego języka angielskiego respondenci i respondentki chciałyby się uczyć tylko na poziomach od C1, a na niższych poziomach poza niemiecki, roysjkim i hiszpańskim jeszcze francuski został wskazany wielokrotnie.",
   data %>% nrow,
   data %>% filter(position == 'Doctoral Studies') %>% nrow(),
   data %>% filter(position == 'Doctoral School') %>% nrow()
@@ -487,9 +624,10 @@ data %>%
          "Poziom" = level_second_language) %>%
   pivot_wider(names_from = "Poziom",
               values_from = "Frequency") %>%
-   kable(caption = cap, "html") %>%
-      kable_styling(bootstrap_options = c("striped","hover"),
-                    font_size = 10,
-                    full_width = TRUE)
+  mutate(across(matches('\\d'),~replace_na(.,0))) %>%
+  DT::datatable(caption = cap,
+                  rownames = FALSE,
+                  filter = "top",
+                  options = list(sDom  = '<"top">lrt<"bottom">ip'))
       
 ```
